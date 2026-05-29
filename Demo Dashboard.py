@@ -2,31 +2,25 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="RFID Asset Tracker",
     page_icon="📡",
     layout="wide",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Main background */
-    .stApp { background-color: #0f1117; color: #e8eaf0; }
-
-    /* Hide Streamlit chrome */
+    .stApp { background-color: #f5f7fa; color: #1a1d27; }
     #MainMenu, footer, header { visibility: hidden; }
 
-    /* Metric cards */
     div[data-testid="metric-container"] {
-        background: #1a1d27;
-        border: 1px solid #2a2d3a;
+        background: #ffffff;
+        border: 1px solid #e0e4ef;
         border-radius: 10px;
         padding: 1rem 1.25rem;
     }
     div[data-testid="metric-container"] label {
-        color: #8b8fa8 !important;
+        color: #6b7280 !important;
         font-size: 12px !important;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -34,45 +28,40 @@ st.markdown("""
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
         font-size: 28px !important;
         font-weight: 600;
+        color: #1a1d27;
     }
 
-    /* Alert boxes */
     .alert-exception {
-        background: rgba(239, 68, 68, 0.12);
+        background: #fff1f1;
         border-left: 3px solid #ef4444;
         border-radius: 0 8px 8px 0;
         padding: 10px 16px;
         margin-bottom: 8px;
         font-size: 14px;
-        color: #fca5a5;
+        color: #b91c1c;
     }
     .alert-warning {
-        background: rgba(245, 158, 11, 0.12);
+        background: #fffbeb;
         border-left: 3px solid #f59e0b;
         border-radius: 0 8px 8px 0;
         padding: 10px 16px;
         margin-bottom: 8px;
         font-size: 14px;
-        color: #fcd34d;
+        color: #92400e;
     }
 
-    /* Section header */
     .section-title {
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: #5a5e72;
+        color: #9ca3af;
         margin: 1.5rem 0 0.75rem;
     }
-
-    /* Table tweaks */
-    .stDataFrame { border-radius: 10px; overflow: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Data ──────────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     records = [
@@ -126,21 +115,19 @@ df = load_data()
 REF_TIME = datetime(2024, 1, 15, 8, 40)
 df["status"] = df.apply(lambda r: classify_status(r, REF_TIME), axis=1)
 
-
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("## 📡 RFID Asset Tracker")
 st.markdown(
-    "<span style='color:#5a5e72; font-size:13px;'>Acme Manufacturing — Floor snapshot: 2024-01-15 08:40</span>",
+    "<span style='color:#9ca3af; font-size:13px;'>Acme Manufacturing — Floor snapshot: 2024-01-15 08:40</span>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-
 # ── Metric Cards ──────────────────────────────────────────────────────────────
-total_value   = df["asset_value_usd"].sum()
-total_assets  = len(df)
-ok_count      = (df["status"] == "OK").sum()
-warning_count = (df["status"] == "Warning").sum()
+total_value     = df["asset_value_usd"].sum()
+total_assets    = len(df)
+ok_count        = (df["status"] == "OK").sum()
+warning_count   = (df["status"] == "Warning").sum()
 exception_count = (df["status"] == "Exception").sum()
 
 c1, c2, c3, c4, c5 = st.columns(5)
@@ -149,11 +136,9 @@ c2.metric("📦 Assets Tracked",        total_assets)
 c3.metric("✅ In Correct Location",   ok_count)
 c4.metric("⚠️ Warnings",             warning_count)
 c5.metric("🚨 Exceptions",           exception_count,
-          delta=f"{exception_count} misplaced",
-          delta_color="inverse")
+          delta=f"{exception_count} misplaced", delta_color="inverse")
 
-
-# ── Exception & Warning Alerts ────────────────────────────────────────────────
+# ── Alerts ────────────────────────────────────────────────────────────────────
 misplaced = df[df["status"].isin(["Exception", "Warning"])].copy()
 
 if misplaced.empty:
@@ -175,126 +160,105 @@ else:
             unsafe_allow_html=True,
         )
 
-
 # ── Sidebar Filters ───────────────────────────────────────────────────────────
 st.sidebar.header("🔍 Filters")
-
-search_term = st.sidebar.text_input("Search asset or tag ID")
-
-all_zones = ["All"] + sorted(df["current_reader"].unique().tolist())
-selected_zone = st.sidebar.selectbox("Zone / Reader", all_zones)
-
-all_cats = ["All"] + sorted(df["category"].unique().tolist())
-selected_cat = st.sidebar.selectbox("Category", all_cats)
-
-all_statuses = ["All", "OK", "Warning", "Exception"]
+search_term     = st.sidebar.text_input("Search asset or tag ID")
+all_zones       = ["All"] + sorted(df["current_reader"].unique().tolist())
+selected_zone   = st.sidebar.selectbox("Zone / Reader", all_zones)
+all_cats        = ["All"] + sorted(df["category"].unique().tolist())
+selected_cat    = st.sidebar.selectbox("Category", all_cats)
+all_statuses    = ["All", "OK", "Warning", "Exception"]
 selected_status = st.sidebar.selectbox("Status", all_statuses)
-
 st.sidebar.markdown("---")
-st.sidebar.markdown(
-    f"**{total_assets} assets** | **${total_value:,.0f}** total value",
-    unsafe_allow_html=False,
-)
+st.sidebar.markdown(f"**{total_assets} assets** | **${total_value:,.0f}** total value")
 
-
-# ── Filter Data ───────────────────────────────────────────────────────────────
+# ── Filter ────────────────────────────────────────────────────────────────────
 view = df.copy()
-
 if search_term:
     mask = (
         view["asset_name"].str.contains(search_term, case=False) |
         view["tag_id"].str.contains(search_term, case=False)
     )
     view = view[mask]
+if selected_zone   != "All": view = view[view["current_reader"] == selected_zone]
+if selected_cat    != "All": view = view[view["category"]       == selected_cat]
+if selected_status != "All": view = view[view["status"]         == selected_status]
 
-if selected_zone != "All":
-    view = view[view["current_reader"] == selected_zone]
-
-if selected_cat != "All":
-    view = view[view["category"] == selected_cat]
-
-if selected_status != "All":
-    view = view[view["status"] == selected_status]
-
-
-# ── Asset Table ───────────────────────────────────────────────────────────────
+# ── Table ─────────────────────────────────────────────────────────────────────
 st.markdown('<p class="section-title">Asset inventory</p>', unsafe_allow_html=True)
 st.caption(f"Showing {len(view)} of {total_assets} assets")
 
+# Build display df with renamed columns
+display_df = view[[
+    "tag_id","asset_name","category",
+    "expected_zone","current_reader",
+    "last_seen","asset_value_usd","status"
+]].copy()
+
+# Style using ORIGINAL column names (before rename) to avoid KeyError
 def color_status(val):
-    colors = {
-        "OK":        "color: #4ade80; font-weight: 600",
-        "Warning":   "color: #fbbf24; font-weight: 600",
-        "Exception": "color: #f87171; font-weight: 600",
-    }
-    return colors.get(val, "")
+    if val == "OK":        return "color: #16a34a; font-weight: 600"
+    if val == "Warning":   return "color: #d97706; font-weight: 600"
+    if val == "Exception": return "color: #dc2626; font-weight: 600"
+    return ""
 
 def highlight_mismatch(row):
+    # row index matches original column names at this point
+    base = [""] * len(row)
     if row["expected_zone"] != row["current_reader"]:
-        return [""] * (len(row) - 2) + ["color: #f87171", ""]
-    return [""] * len(row)
-
-display_df = view[[
-    "tag_id", "asset_name", "category",
-    "expected_zone", "current_reader",
-    "last_seen", "asset_value_usd", "status"
-]].rename(columns={
-    "tag_id":          "Tag ID",
-    "asset_name":      "Asset",
-    "category":        "Category",
-    "expected_zone":   "Expected Zone",
-    "current_reader":  "Current Reader",
-    "last_seen":       "Last Seen",
-    "asset_value_usd": "Value (USD)",
-    "status":          "Status",
-})
+        cr_idx = list(row.index).index("current_reader")
+        base[cr_idx] = "color: #dc2626; font-weight: 600"
+    return base
 
 styled = (
     display_df.style
-    .map(color_status, subset=["Status"])
+    .map(color_status, subset=["status"])
     .apply(highlight_mismatch, axis=1)
-    .format({"Value (USD)": "${:,.0f}", "Last Seen": lambda x: x.strftime("%Y-%m-%d %H:%M")})
+    .format({
+        "asset_value_usd": "${:,.0f}",
+        "last_seen": lambda x: x.strftime("%Y-%m-%d %H:%M")
+    })
+)
+
+# Rename for display only — after styling is applied
+styled = styled.relabel_index(
+    ["Tag ID","Asset","Category","Expected Zone",
+     "Current Reader","Last Seen","Value (USD)","Status"],
+    axis=1
 )
 
 st.dataframe(styled, use_container_width=True, hide_index=True)
 
-
-# ── Zone Value Breakdown ──────────────────────────────────────────────────────
+# ── Zone Value Chart ──────────────────────────────────────────────────────────
 st.markdown('<p class="section-title">Inventory value by zone</p>', unsafe_allow_html=True)
-
 zone_val = (
     df.groupby("current_reader")["asset_value_usd"]
-    .sum()
-    .reset_index()
-    .rename(columns={"current_reader": "Zone", "asset_value_usd": "Total Value"})
+    .sum().reset_index()
+    .rename(columns={"current_reader":"Zone","asset_value_usd":"Total Value"})
     .sort_values("Total Value", ascending=False)
 )
 st.bar_chart(zone_val.set_index("Zone"), color="#6366f1")
 
-
 # ── Category Breakdown ────────────────────────────────────────────────────────
 st.markdown('<p class="section-title">Assets by category</p>', unsafe_allow_html=True)
-
 cat_counts = (
     df.groupby("category")
-    .agg(count=("tag_id", "count"), total_value=("asset_value_usd", "sum"))
+    .agg(count=("tag_id","count"), total_value=("asset_value_usd","sum"))
     .reset_index()
-    .rename(columns={"category": "Category", "count": "Count", "total_value": "Total Value"})
+    .rename(columns={"category":"Category","count":"Count","total_value":"Total Value"})
     .sort_values("Total Value", ascending=False)
 )
 st.dataframe(
     cat_counts.style.format({"Total Value": "${:,.0f}"}),
-    use_container_width=True,
-    hide_index=True,
+    use_container_width=True, hide_index=True
 )
-
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown(
-    "<span style='color:#3a3d4a; font-size:12px;'>"
+    "<span style='color:#d1d5db; font-size:12px;'>"
     "Built with Streamlit · RFID data simulated for Acme Manufacturing · "
-    "Exception threshold: asset misplaced &gt; 3 hours"
+    "Exception threshold: asset misplaced > 3 hours"
     "</span>",
     unsafe_allow_html=True,
 )
