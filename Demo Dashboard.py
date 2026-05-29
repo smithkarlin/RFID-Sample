@@ -251,7 +251,7 @@ display_df = view[[
 
 styled = (
     display_df.style
-    .applymap(color_status, subset=["Status"])
+    .map(color_status, subset=["Status"])
     .apply(highlight_mismatch, axis=1)
     .format({"Value (USD)": "${:,.0f}", "Last Seen": lambda x: x.strftime("%Y-%m-%d %H:%M")})
 )
